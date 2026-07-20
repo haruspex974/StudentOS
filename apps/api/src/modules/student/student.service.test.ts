@@ -103,4 +103,39 @@ describe("StudentService", () => {
       expect((row as any).membership).toBeUndefined();
     });
   });
+
+  describe("Student Profile & Edge Cases", () => {
+    it("enrollStudentIntoDB throws NotFoundError for invalid batchId or membershipId", async () => {
+      await expect(StudentService.enrollStudentIntoDB("invalid-batch-id", studentMembershipId)).rejects.toThrow();
+      await expect(StudentService.enrollStudentIntoDB(batchId, "invalid-membership-id")).rejects.toThrow();
+    });
+
+    it("revokeEnrollmentIntoDB throws errors for non-existent or already revoked enrollments", async () => {
+      await expect(StudentService.revokeEnrollmentIntoDB(batchId, "invalid-bm-id")).rejects.toThrow();
+
+      await StudentService.revokeEnrollmentIntoDB(batchId, batchMembershipId);
+      await expect(StudentService.revokeEnrollmentIntoDB(batchId, batchMembershipId)).rejects.toThrow(BadRequestError);
+    });
+
+    it("getStudentProfileFromDB and updateStudentProfileIntoDB manage profile details", async () => {
+      const initial = await StudentService.getStudentProfileFromDB(studentMembershipId);
+      expect(initial.membershipId).toBe(studentMembershipId);
+      expect(initial.name).toBe("Sam Enrollee");
+
+      const updated = await StudentService.updateStudentProfileIntoDB(studentMembershipId, {
+        phone: "555-0199",
+        courseName: "Computer Science",
+      });
+      expect(updated.phone).toBe("555-0199");
+
+      const fetched = await StudentService.getStudentProfileFromDB(studentMembershipId);
+      expect(fetched.phone).toBe("555-0199");
+      expect(fetched.courseName).toBe("Computer Science");
+    });
+
+    it("profile operations throw NotFoundError when membershipId does not exist", async () => {
+      await expect(StudentService.getStudentProfileFromDB("invalid-membership-id")).rejects.toThrow();
+      await expect(StudentService.updateStudentProfileIntoDB("invalid-membership-id", { phone: "123" })).rejects.toThrow();
+    });
+  });
 });

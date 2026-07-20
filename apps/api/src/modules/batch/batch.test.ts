@@ -240,5 +240,25 @@ describe("BatchService", () => {
       const list = await BatchService.getListBatchesFromDB(workspaceId);
       expect(list.length).toBe(0);
     });
+
+    it("should throw NotFoundError for non-existent batch IDs across all service operations", async () => {
+      const invalidId = "non-existent-batch-id";
+      await expect(BatchService.updateBatchIntoDB(workspaceId, invalidId, { name: "New Name" })).rejects.toThrow(NotFoundError);
+      await expect(BatchService.archiveBatchIntoDB(workspaceId, invalidId)).rejects.toThrow(NotFoundError);
+      await expect(BatchService.allocateMemberIntoDB(workspaceId, invalidId, { membershipId: studentMembershipId })).rejects.toThrow(NotFoundError);
+      await expect(BatchService.getListBatchMembersFromDB(workspaceId, invalidId)).rejects.toThrow(NotFoundError);
+      await expect(BatchService.updateBatchMembershipIntoDB(workspaceId, invalidId, batchMembershipId, { isCR: true })).rejects.toThrow(NotFoundError);
+      await expect(BatchService.updateBatchMembershipIntoDB(workspaceId, batchId, "invalid-bm-id", { isCR: true })).rejects.toThrow(NotFoundError);
+    });
+
+    it("should re-allocate a previously revoked member and clear revokedAt", async () => {
+      const reallocated = await BatchService.allocateMemberIntoDB(workspaceId, batchId, {
+        membershipId: studentMembershipId,
+        isCR: true,
+      });
+
+      expect(reallocated.revokedAt).toBeNull();
+      expect(reallocated.isCR).toBe(true);
+    });
   });
 });

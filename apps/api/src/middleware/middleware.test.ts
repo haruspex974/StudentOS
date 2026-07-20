@@ -49,4 +49,29 @@ describe("Middleware", () => {
       },
     });
   });
+
+  it("compressionMiddleware filter skips compression for text/event-stream headers", () => {
+    const req: any = { headers: { accept: "text/event-stream" }, method: "GET" };
+    const res: any = { getHeader: jest.fn() };
+    const next = jest.fn();
+
+    compressionMiddleware(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it("errorHandler catches unexpected generic errors and returns 500 status", () => {
+    const req: any = { id: "req-err-500" };
+    const res: any = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    errorHandler(new Error("Database crash"), req, res, jest.fn());
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Database crash",
+        requestId: "req-err-500",
+      },
+    });
+  });
 });

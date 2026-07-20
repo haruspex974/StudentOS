@@ -762,5 +762,32 @@ describe("SessionService", () => {
         ),
       ).rejects.toThrow(NotFoundError);
     });
+
+    it("should handle updateSession edge cases (started session times, empty payload, single field update)", async () => {
+      await prisma.session.update({
+        where: { id: testSessionId },
+        data: { status: "STARTED" },
+      });
+
+      await expect(
+        SessionService.updateSessionIntoDB(testSessionId, workspaceId, {
+          scheduledStart: new Date(Date.now() + 1000).toISOString(),
+        }),
+      ).rejects.toThrow(BadRequestError);
+
+      await prisma.session.update({
+        where: { id: testSessionId },
+        data: { status: "SCHEDULED" },
+      });
+
+      const noChange = await SessionService.updateSessionIntoDB(testSessionId, workspaceId, {});
+      expect(noChange.id).toBe(testSessionId);
+
+      await expect(
+        SessionService.updateSessionIntoDB(testSessionId, workspaceId, {
+          scheduledStart: new Date(Date.now() + 200 * 60 * 60 * 1000).toISOString(),
+        }),
+      ).rejects.toThrow(BadRequestError);
+    });
   });
 });

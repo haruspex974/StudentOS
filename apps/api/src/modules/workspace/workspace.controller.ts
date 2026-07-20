@@ -1,3 +1,4 @@
+import { IMemberResult } from "@studentos/shared-types";
 import { Response } from "express";
 import { ApiResponse } from "../../common/api-response";
 import { asyncHandler } from "../../common/async-handler";
@@ -61,7 +62,7 @@ export class WorkspaceController {
 
       ApiResponse.success(
         res,
-        memberships.map((membership) => ({
+        memberships.map((membership: IMemberResult) => ({
           id: membership.id,
           role: membership.role,
           status: membership.status,

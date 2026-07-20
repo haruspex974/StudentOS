@@ -402,5 +402,46 @@ describe("AttendanceService", () => {
         ),
       ).rejects.toThrow(ForbiddenError);
     });
+
+    it("should handle batch lateThresholdMinsOverride and invalid session error branches", async () => {
+      await prisma.batch.update({
+        where: { id: batchId },
+        data: { lateThresholdMinsOverride: 15 },
+      });
+
+      const res = await AttendanceService.submitAttendanceIntoDB(
+        sessionId,
+        studentMembershipId,
+        "123456",
+      );
+      expect(res.status).toBe("PRESENT");
+
+      await expect(
+        AttendanceService.manualMarkAttendanceIntoDB(
+          "invalid-session-id",
+          mentorMembershipId,
+          "MENTOR",
+          { studentBatchMembershipId, status: "PRESENT", manualReason: "Reason" },
+        ),
+      ).rejects.toThrow(NotFoundError);
+
+      await expect(
+        AttendanceService.manualMarkAttendanceIntoDB(
+          sessionId,
+          mentorMembershipId,
+          "MENTOR",
+          { studentBatchMembershipId: "invalid-bm-id", status: "PRESENT", manualReason: "Reason" },
+        ),
+      ).rejects.toThrow(BadRequestError);
+
+      await expect(
+        AttendanceService.getSessionAttendanceRosterFromDB("invalid-session-id"),
+      ).rejects.toThrow(NotFoundError);
+
+      await prisma.batch.update({
+        where: { id: batchId },
+        data: { lateThresholdMinsOverride: null },
+      });
+    });
   });
 });

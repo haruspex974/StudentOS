@@ -3,8 +3,6 @@ dist/
 build/
 out/
 .next/
-.env
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
@@ -30,3 +28,4 @@ coverage/
 apps/api/prisma/seed.js
 apps/api/prisma/seed.d.ts
 apps/api/prisma/migrations/
+config.bat

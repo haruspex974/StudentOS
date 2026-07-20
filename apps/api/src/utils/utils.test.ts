@@ -47,4 +47,24 @@ describe("Utilities", () => {
       skills: ["React"],
     });
   });
+
+  it("parseCSV handles escaped quotes, CRLF line endings, and skips incomplete rows", () => {
+    const csv = Buffer.from(
+      'email,name,skills\r\n"john@example.com","John ""Johnny"" Doe","JS, TS"\r\n"invalid@example.com",,\r\n\r\n',
+    );
+
+    const rows = parseCSV(csv);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({
+      rowNumber: 1,
+      email: "john@example.com",
+      name: 'John "Johnny" Doe',
+      skills: ["JS", "TS"],
+    });
+  });
+
+  it("parseCSV throws EMPTY_FILE when content contains only whitespace or empty rows", () => {
+    expect(() => parseCSV(Buffer.from("   \n\r\n   "))).toThrow(BadRequestError);
+    expect(() => parseCSV(Buffer.from(",,\n,,\n"))).toThrow(BadRequestError);
+  });
 });

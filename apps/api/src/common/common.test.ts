@@ -72,4 +72,24 @@ describe("Common utilities", () => {
       BadRequestError,
     );
   });
+
+  it("instantiates custom ApiError subclasses with correct default status codes and error codes", () => {
+    const { UnauthorizedError, ForbiddenError, NotFoundError, InternalServerError } = require("./errors");
+
+    const unauth = new UnauthorizedError();
+    expect(unauth.statusCode).toBe(401);
+    expect(unauth.code).toBe("UNAUTHENTICATED");
+
+    const forbidden = new ForbiddenError();
+    expect(forbidden.statusCode).toBe(403);
+    expect(forbidden.code).toBe("FORBIDDEN");
+
+    const notFound = new NotFoundError("not found");
+    expect(notFound.statusCode).toBe(404);
+    expect(notFound.code).toBe("NOT_FOUND");
+
+    const internalErr = new InternalServerError();
+    expect(internalErr.statusCode).toBe(500);
+    expect(internalErr.code).toBe("INTERNAL_SERVER_ERROR");
+  });
 });

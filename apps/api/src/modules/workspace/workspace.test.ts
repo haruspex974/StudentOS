@@ -103,4 +103,57 @@ describe("WorkspaceService", () => {
       await prisma.user.delete({ where: { id: otherStudent.id } });
     });
   });
+
+  describe("Workspace CRUD & Member Operations", () => {
+    it("getWorkspaceFromDB retrieves workspace and settings", async () => {
+      const ws = await WorkspaceService.getWorkspaceFromDB({ workspaceId });
+      expect(ws.id).toBe(workspaceId);
+      expect(ws.settings).toBeDefined();
+    });
+
+    it("updateWorkspaceSettingsIntoDB updates timezone and thresholds", async () => {
+      const updated = await WorkspaceService.updateWorkspaceSettingsIntoDB(workspaceId, "UTC", 20, 12);
+      expect(updated.timezone).toBe("UTC");
+      expect(updated.settings.defaultAttendanceDurationMins).toBe(20);
+      expect(updated.settings.lateThresholdMins).toBe(12);
+    });
+
+    it("inviteMemberIntoDB invites a new user or connects existing user", async () => {
+      const invitedEmail = `invited-${randomUUID().slice(0, 8)}@example.com`;
+      const membership = await WorkspaceService.inviteMemberIntoDB(workspaceId, {
+        email: invitedEmail,
+        name: "Invited User",
+        role: "STUDENT",
+      });
+
+      expect(membership.workspaceId).toBe(workspaceId);
+      expect(membership.role).toBe("STUDENT");
+
+      const members = await WorkspaceService.getListMembersFromDB({ workspaceId, page: 1, limit: 10 });
+      expect(members.total).toBeGreaterThanOrEqual(2);
+
+      const deactivated = await WorkspaceService.deactivateMemberIntoDB(membership.id);
+      expect(deactivated.status).toBe("INACTIVE");
+    });
+
+    it("getWorkspaceFromDB throws Error when workspace ID does not exist", async () => {
+      await expect(WorkspaceService.getWorkspaceFromDB({ workspaceId: "non-existent-ws-id" })).rejects.toThrow();
+    });
+
+    it("inviteMemberIntoDB returns existing membership if user is already a member", async () => {
+      const invitedEmail = `existing-member-${randomUUID().slice(0, 8)}@example.com`;
+      const first = await WorkspaceService.inviteMemberIntoDB(workspaceId, {
+        email: invitedEmail,
+        name: "Existing Member",
+        role: "STUDENT",
+      });
+      const second = await WorkspaceService.inviteMemberIntoDB(workspaceId, {
+        email: invitedEmail,
+        name: "Existing Member",
+        role: "STUDENT",
+      });
+
+      expect(second.id).toBe(first.id);
+    });
+  });
 });

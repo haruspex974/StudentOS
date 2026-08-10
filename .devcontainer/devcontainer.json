@@ -29,5 +29,6 @@
       "onAutoForward": "notify"
     }
   },
+  "postCreateCommand": "rtk init -g",
   "remoteUser": "vscode"
 }

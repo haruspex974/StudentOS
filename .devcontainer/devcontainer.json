@@ -1,0 +1,33 @@
+{
+  "name": "Student OS Devcontainer",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      },
+      "extensions": [
+        "ms-python.python",
+        "yzhang.markdown-all-in-one",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [8000, 8080],
+  "portsAttributes": {
+    "8000": {
+      "label": "Port de secours / App",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Port de secours / App alternative",
+      "onAutoForward": "notify"
+    }
+  },
+  "remoteUser": "vscode"
+}
